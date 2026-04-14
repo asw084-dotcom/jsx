@@ -1,0 +1,274 @@
+<html>
+<head>
+<title>Ash's Wordle JSX</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style type="text/css">
+body {
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #121213;
+    color: #fff;
+}
+h1 {
+    font-size: 2.5vw;
+    letter-spacing: 4px;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+#message {
+    font-size: 1.2rem;
+    font-weight: bold;
+    height: 30px;
+    margin: 5px auto;
+}
+#board {
+    margin: 5px auto;
+    display: inline-block;
+}
+.row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+.tile {
+    width: 58px;
+    height: 58px;
+    border: 2px solid #3a3a3c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.green {
+    background-color: #538d4e;
+    border-color: #538d4e;
+}
+.yellow {
+    background-color: #b59f3b;
+    border-color: #b59f3b;
+}
+.grey {
+    background-color: #3a3a3c;
+    border-color: #3a3a3c;
+}
+#keyboard {
+    margin: 20px auto;
+    max-width: 500px;
+}
+.kbrow {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.key {
+    width: 34px;
+    height: 44px;
+    border-radius: 4px;
+    background-color: #818384;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.key.green {
+    background-color: #538d4e;
+}
+.key.yellow {
+    background-color: #b59f3b;
+}
+.key.grey {
+    background-color: #3a3a3c;
+}
+@media (max-width: 700px) {
+    h1 {
+        font-size: 5vw;
+    }
+    .tile {
+        width: 46px;
+        height: 46px;
+        font-size: 1.3rem;
+    }
+}
+</style>
+</head>
+<body>
+
+<h1>Play Wordle!</h1>
+<div id="message">&nbsp;</div>
+<div id="myapp"></div>
+
+<script type="text/babel">
+
+var NUM_ROWS = 6
+var NUM_COLS = 5
+var answer = "MOODY"
+var guesses = ["MIGHT", "FLOOD", "STRAY"]
+
+
+var allResults = []
+
+for (g=0; g<guesses.length; g++)
+{
+    guessArr = guesses[g].split("")
+    answerArr = answer.split("")
+    results = ["grey", "grey", "grey", "grey", "grey"]
+    used = [false, false, false, false, false]
+
+    for (i=0; i<NUM_COLS; i++)
+    {
+        if (guessArr[i] == answerArr[i])
+        {
+            results[i] = "green"
+            used[i] = true
+        }
+    }
+    for (i=0; i<NUM_COLS; i++)
+    {
+        if (results[i] == "green")
+            continue
+
+        for (j=0; j<NUM_COLS; j++)
+        {
+            if (used[j] == false && guessArr[i] == answerArr[j])
+            {
+                results[i] = "yellow"
+                used[j] = true
+                break
+            }
+        }
+    }
+
+    allResults.push(results)
+}
+var keyColors = {}
+
+for (g=0; g<guesses.length; g++)
+{
+    for (i=0; i<NUM_COLS; i++)
+    {
+        letter = guesses[g].charAt(i)
+        color = allResults[g][i]
+
+        if (keyColors[letter] == "green")
+            continue
+        if (keyColors[letter] == "yellow" && color == "grey")
+            continue
+
+        keyColors[letter] = color
+    }
+}
+
+function Tile(props)
+{
+    return <div className={"tile " + props.color}>{props.letter}</div>
+}
+
+function Row(props)
+{
+    var tiles = []
+    for (var c=0; c<NUM_COLS; c++)
+    {
+        if (props.guess)
+        {
+            tiles.push(
+                <Tile key={c} letter={props.guess.charAt(c)} color={props.colors[c]} />
+            )
+        }
+        else
+        {
+            tiles.push(
+              <Tile key={c} letter="" color="" />
+            )
+        }
+    }
+    return <div className="row">{tiles}</div>
+}
+
+function Board()
+{
+    var rows = []
+    for (r=0; r<NUM_ROWS; r++)
+    {
+        if (r < guesses.length)
+        {
+            rows.push(
+                <Row key={r} guess={guesses[r]} colors={allResults[r]} />
+            )
+        }
+        else
+        {
+            rows.push(
+                <Row key={r} guess={null} colors={null} />
+            )
+        }
+    }
+    return <div id="board">{rows}</div>
+}
+
+function Key(props)
+{
+    keyClass = "key"
+    if (keyColors[props.letter] == "green")
+        keyClass = "key green"
+    else if (keyColors[props.letter] == "yellow")
+        keyClass = "key yellow"
+    else if (keyColors[props.letter] == "grey")
+        keyClass = "key grey"
+
+    return <div className={keyClass}>{props.letter}</div>
+}
+
+function Keyboard()
+{
+    row1 = "QWERTYUIOP".split("")
+    row2 = "ASDFGHJKL".split("")
+    row3 = "ZXCVBNM".split("")
+
+    return (
+        <div id="keyboard">
+            <div className="kbrow">
+                {row1.map(function(letter, i) {
+                    return <Key key={i} letter={letter} />
+                })}
+            </div>
+            <div className="kbrow">
+              {row2.map(function(letter, i) {
+                  return <Key key={i} letter={letter} />
+              })}
+            </div>
+            <div className="kbrow">
+                {row3.map(function(letter, i) {
+                    return <Key key={i} letter={letter} />
+                })}
+            </div>
+        </div>
+    )
+}
+
+function App()
+{
+    return (
+      <div>
+          <Board />
+          <Keyboard />
+      </div>
+    )
+}
+
+var myroot = ReactDOM.createRoot(document.querySelector("#myapp"))
+myroot.render(<App />)
+
+</script>
+
+</body>
+</html>
